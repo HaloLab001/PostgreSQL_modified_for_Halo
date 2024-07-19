@@ -1980,10 +1980,10 @@ make_stmthist(FILE *cmdfd)
 	
 
 	/* 
-	 * now we can move the table's datafile. 
-	 * As the table is just initialized right now, we can easy build an empty file for it
+	 * Now we can move the table's datafile. 
+	 * As the table is initialized just right now, we can easily build an empty file for it
 	 */
-	relfilepath = psprintf("%s/%s", pg_data, "global/" CppAsString2(stmthist_filenode));
+	relfilepath = psprintf("%s/%s/%s", pg_data, subdirs[0], CppAsString2(stmthist_filenode));
 	if ((relfile = fopen(relfilepath, "w")) == NULL)
 		pg_fatal("could not open file \"%s\" for writing: %m", relfilepath);
 	if (fclose(relfile))
