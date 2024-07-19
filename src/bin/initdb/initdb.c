@@ -69,6 +69,7 @@
 #include "catalog/pg_class_d.h" /* pgrminclude ignore */
 #include "catalog/pg_collation_d.h"
 #include "catalog/pg_database_d.h"	/* pgrminclude ignore */
+#include "catalog/pg_tablespace_d.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
@@ -285,6 +286,7 @@ static void setup_collation(FILE *cmdfd);
 static void setup_privileges(FILE *cmdfd);
 static void set_info_version(void);
 static void setup_schema(FILE *cmdfd);
+static void make_stmthist(FILE *cmdfd);
 static void load_plpgsql(FILE *cmdfd);
 static void vacuum_db(FILE *cmdfd);
 static void make_template0(FILE *cmdfd);
@@ -1912,6 +1914,91 @@ setup_schema(FILE *cmdfd)
 				  escape_quotes(features_file));
 }
 
+
+/*
+ * make global statement_history table
+ */
+static void
+make_stmthist(FILE *cmdfd)
+{
+	char		*relfilepath;
+	FILE		*relfile;
+
+/* NEED TO IMPROVEMENT!!!, hardcode file number for statement_history_internal for now */
+#define	stmthist_filenode	13541
+	/*
+	 * create unlogged statement_history table
+	 */
+	PG_CMD_PUTS("CREATE UNLOGGED TABLE pg_catalog.statement_history_internal ("
+				"datid               oid,"
+				"userid              oid,"
+				"nspid               oid,"
+				/* client info attributes */
+				"application_name    text,"
+				"client_addr         text,"
+				"client_port         int,"
+				/* query info attributes */
+				"query_string        text,"
+				"query_id            bigint,"
+				"start_time          timestamptz,"
+				"finish_time         timestamptz,"
+				"processid           int,"
+				"n_soft_parse        bigint,"
+				"n_hard_parse        bigint,"
+				"query_plan          text,"
+				/* query result info attributes */
+				"n_returned_rows     bigint,"
+				"n_tuples_fetched    bigint,"
+				"n_tuples_returned   bigint,"
+				"n_tuples_inserted   bigint,"
+				"n_tuples_updated    bigint,"
+				"n_tuples_deleted    bigint,"
+				"n_blocks_fetched    bigint,"
+				"n_blocks_hit        bigint,"
+				/* execution info attributes */
+				"db_time             bigint,"
+				"cpu_time            bigint,"
+				"io_time             bigint,"
+				"parse_time          bigint,"
+				"rewrite_time        bigint,"
+				"plan_time           bigint,"
+				"exec_time           bigint,"
+				/* lock info attribtes */
+				"lock_count          bigint,"
+				"lock_time           bigint,"
+				"lock_wait_count     bigint,"
+				"lock_wait_time      bigint,"
+				"lock_max_count      bigint,"
+				"lwlock_count        bigint,"
+				"lwlock_wait_count   bigint,"
+				"lwlock_time         bigint,"
+				"lwlock_wait_time    bigint,"
+				"wait_event          text,"
+				/* other info */
+				"is_slow_sql         boolean"
+				");\n\n");
+	
+
+	/* 
+	 * now we can move the table's datafile. 
+	 * As the table is just initialized right now, we can easy build an empty file for it
+	 */
+	relfilepath = psprintf("%s/%s", pg_data, "global/" CppAsString2(stmthist_filenode));
+	if ((relfile = fopen(relfilepath, "w")) == NULL)
+		pg_fatal("could not open file \"%s\" for writing: %m", relfilepath);
+	if (fclose(relfile))
+		pg_fatal("could not close file \"%s\": %m", relfilepath);
+
+	/*
+	 * make statement_history global
+	 */
+	PG_CMD_PUTS("UPDATE pg_class SET reltablespace = " CppAsString2(GLOBALTABLESPACE_OID)
+				", relisshared = 't', relfilenode = " CppAsString2(stmthist_filenode)
+				" WHERE relname = 'statement_history_internal';\n\n");
+	
+	PG_CMD_PUTS("TRUNCATE pg_catalog.statement_history_internal;\n\n");
+}
+
 /*
  * load PL/pgSQL server-side language
  */
@@ -3070,6 +3157,8 @@ initialize_data_directory(void)
 	setup_privileges(cmdfd);
 
 	setup_schema(cmdfd);
+
+	make_stmthist(cmdfd);
 
 	load_plpgsql(cmdfd);
 
