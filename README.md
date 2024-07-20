@@ -1,6 +1,6 @@
 ![image](http://www.halodbtech.com/themes/moderna-template/assets/img/12-logo.png)
 =====================================
-PostgreSQL Database Management System
+Halo_for_PostgreSQL Database Management System
 =====================================
 
 This directory contains the source code distribution of the PostgreSQL
