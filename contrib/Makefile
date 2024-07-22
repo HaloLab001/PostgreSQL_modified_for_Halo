@@ -49,7 +49,8 @@ SUBDIRS = \
 		tsm_system_rows \
 		tsm_system_time \
 		unaccent	\
-		vacuumlo
+		vacuumlo	\
+		statement_history
 
 ifeq ($(with_ssl),openssl)
 SUBDIRS += pgcrypto sslinfo
