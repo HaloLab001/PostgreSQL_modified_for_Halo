@@ -19,6 +19,9 @@
 #include "parser/parse_node.h"
 
 /* Hook for plugins to get control at end of parse analysis */
+typedef void (*pre_parse_analyze_hook_type) (ParseState *pstate,
+											 RawStmt *parseTree);
+extern PGDLLIMPORT pre_parse_analyze_hook_type pre_parse_analyze_hook;
 typedef void (*post_parse_analyze_hook_type) (ParseState *pstate,
 											  Query *query,
 											  JumbleState *jstate);

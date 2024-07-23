@@ -26,6 +26,9 @@
 #include "parser/parser.h"
 #include "parser/scansup.h"
 
+
+pre_parse_hook_type pre_parse_hook = NULL;
+post_parse_hook_type post_parse_hook = NULL;
 static bool check_uescapechar(unsigned char escape);
 static char *str_udeescape(const char *str, char escape,
 						   int position, core_yyscan_t yyscanner);
@@ -73,8 +76,14 @@ raw_parser(const char *str, RawParseMode mode)
 	/* initialize the bison parser */
 	parser_init(&yyextra);
 
+	if (pre_parse_hook)
+		pre_parse_hook(str, mode);
+
 	/* Parse! */
 	yyresult = base_yyparse(yyscanner);
+
+	if (post_parse_hook)
+		post_parse_hook(yyextra.parsetree);
 
 	/* Clean up (release memory) */
 	scanner_finish(yyscanner);

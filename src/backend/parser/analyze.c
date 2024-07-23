@@ -55,6 +55,7 @@
 
 
 /* Hook for plugins to get control at end of parse analysis */
+pre_parse_analyze_hook_type pre_parse_analyze_hook = NULL;
 post_parse_analyze_hook_type post_parse_analyze_hook = NULL;
 
 static Query *transformOptionalSelectInto(ParseState *pstate, Node *parseTree);
@@ -118,6 +119,9 @@ parse_analyze_fixedparams(RawStmt *parseTree, const char *sourceText,
 
 	pstate->p_queryEnv = queryEnv;
 
+	if (pre_parse_analyze_hook)
+		pre_parse_analyze_hook(pstate, parseTree);
+
 	query = transformTopLevelStmt(pstate, parseTree);
 
 	if (IsQueryIdEnabled())
@@ -156,6 +160,9 @@ parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
 	setup_parse_variable_parameters(pstate, paramTypes, numParams);
 
 	pstate->p_queryEnv = queryEnv;
+
+	if (pre_parse_analyze_hook)
+		pre_parse_analyze_hook(pstate, parseTree);
 
 	query = transformTopLevelStmt(pstate, parseTree);
 
@@ -196,6 +203,9 @@ parse_analyze_withcb(RawStmt *parseTree, const char *sourceText,
 	pstate->p_sourcetext = sourceText;
 	pstate->p_queryEnv = queryEnv;
 	(*parserSetup) (pstate, parserSetupArg);
+
+	if (pre_parse_analyze_hook)
+		pre_parse_analyze_hook(pstate, parseTree);
 
 	query = transformTopLevelStmt(pstate, parseTree);
 

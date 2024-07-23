@@ -7538,6 +7538,10 @@
 { oid => '3034', descr => 'file path of relation',
   proname => 'pg_relation_filepath', provolatile => 's', prorettype => 'text',
   proargtypes => 'regclass', prosrc => 'pg_relation_filepath' },
+{ oid => '8937', descr => 'Update the filemap of a relation',
+  proname => 'pg_relation_relmap_update', provolatile => 's', prorettype => 'bool',
+  proargtypes => 'regclass oid', prosrc => 'pg_relation_relmap_update' },
+
 
 { oid => '2316', descr => '(internal)',
   proname => 'postgresql_fdw_validator', prorettype => 'bool',

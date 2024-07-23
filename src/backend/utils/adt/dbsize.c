@@ -1019,3 +1019,18 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TEXT_P(cstring_to_text(path));
 }
+
+/*
+ * Update the filemap of a relation
+ *
+ */
+Datum
+pg_relation_relmap_update(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	RelFileNumber	fileid = PG_GETARG_OID(1);
+
+	RelationMapUpdateMap(relid, fileid, true, true);
+
+	PG_RETURN_BOOL(true);
+}

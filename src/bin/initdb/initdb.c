@@ -1993,10 +1993,18 @@ make_stmthist(FILE *cmdfd)
 	 * make statement_history global
 	 */
 	PG_CMD_PUTS("UPDATE pg_class SET reltablespace = " CppAsString2(GLOBALTABLESPACE_OID)
-				", relisshared = 't', relfilenode = " CppAsString2(stmthist_filenode)
+				", relisshared = 't', relfilenode = 0"
 				" WHERE relname = 'statement_history_internal';\n\n");
-	
+	PG_CMD_PUTS("SELECT pg_relation_relmap_update('statement_history_internal'::regclass, "
+				CppAsString2(stmthist_filenode)");\n\n");
 	PG_CMD_PUTS("TRUNCATE pg_catalog.statement_history_internal;\n\n");
+
+	/*
+	 * Make indexes
+	 *
+	 * There is some problems here currently as the system refused to create global index after initdb.
+	 * We need to find a right way to make indexes.
+	 */
 }
 
 /*

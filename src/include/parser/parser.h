@@ -58,6 +58,13 @@ extern PGDLLIMPORT bool escape_string_warning;
 extern PGDLLIMPORT bool standard_conforming_strings;
 
 
+
+typedef void (*pre_parse_hook_type) (const char *str, RawParseMode mode);
+extern PGDLLIMPORT pre_parse_hook_type pre_parse_hook;
+
+typedef void (*post_parse_hook_type) (List	*parsetree);
+extern PGDLLIMPORT post_parse_hook_type post_parse_hook;
+
 /* Primary entry point for the raw parsing functions */
 extern List *raw_parser(const char *str, RawParseMode mode);
 
