@@ -48,9 +48,14 @@
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
 
-
 /* This configuration variable is used to set the lock table size */
 int			max_locks_per_xact; /* set by guc.c */
+
+/* statement history hook */
+lock_statisc_func_type lock_statis_hook = NULL;
+lock_statisc_end_type lock_statis_end_hook = NULL;
+lock_statisc_wait_type lock_statis_wait_hook = NULL;
+lock_statisc_wait_end_type lock_statis_wait_end_hook = NULL;
 
 #define NLOCKENTS() \
 	mul_size(max_locks_per_xact, add_size(MaxBackends, max_prepared_xacts))
@@ -758,8 +763,19 @@ LockAcquire(const LOCKTAG *locktag,
 			bool sessionLock,
 			bool dontWait)
 {
-	return LockAcquireExtended(locktag, lockmode, sessionLock, dontWait,
+
+	LockAcquireResult	lockResult;
+	/* for statement history */
+	if (lock_statis_hook)
+		lock_statis_hook();
+
+	lockResult = LockAcquireExtended(locktag, lockmode, sessionLock, dontWait,
 							   true, NULL);
+
+	if (lock_statis_hook)
+		lock_statis_end_hook();
+	
+	return lockResult;
 }
 
 /*
@@ -1052,6 +1068,10 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		 */
 		MyProc->heldLocks = proclock->holdMask;
 
+		/* for statement history */
+		if (lock_statis_hook)
+			lock_statis_wait_hook();
+
 		/*
 		 * Sleep till someone wakes me up. We do this even in the dontWait
 		 * case, because while trying to go to sleep, we may discover that we
@@ -1079,6 +1099,10 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		 * return.  All required changes in locktable state must have been
 		 * done when the lock was granted to us --- see notes in WaitOnLock.
 		 */
+
+		/* for statement_history */
+		if (lock_statis_hook)
+			lock_statis_wait_end_hook();
 
 		/*
 		 * Check the proclock entry status. If dontWait = true, this is an
