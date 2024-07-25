@@ -24,6 +24,16 @@
 
 struct PGPROC;
 
+/* statement history hook */
+typedef void (*LWLock_statisc_hook_type)();
+extern PGDLLIMPORT LWLock_statisc_hook_type lwlock_statisc_hook;
+
+typedef void (*LWLock_statisc_end_type)();
+extern PGDLLIMPORT LWLock_statisc_end_type lwlock_statisc_end_hook;
+
+typedef void (*LWLock_statisc_wait_type)();
+extern PGDLLIMPORT LWLock_statisc_wait_type lwlock_statisc_wait_hook;
+
 /* what state of the wait process is a backend in */
 typedef enum LWLockWaitState
 {

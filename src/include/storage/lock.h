@@ -31,6 +31,17 @@ typedef struct PGPROC PGPROC;
 /* GUC variables */
 extern PGDLLIMPORT int max_locks_per_xact;
 
+/* statement history hook */
+typedef void (*lock_statisc_func_type)();
+typedef void (*lock_statisc_end_type)();
+typedef void (*lock_statisc_wait_type)();
+typedef void (*lock_statisc_wait_end_type)();
+
+extern PGDLLIMPORT lock_statisc_func_type lock_statis_hook;
+extern PGDLLIMPORT lock_statisc_end_type lock_statis_end_hook;
+extern PGDLLIMPORT lock_statisc_wait_type lock_statis_wait_hook;
+extern PGDLLIMPORT lock_statisc_wait_end_type lock_statis_wait_end_hook;
+
 #ifdef LOCK_DEBUG
 extern PGDLLIMPORT int Trace_lock_oidmin;
 extern PGDLLIMPORT bool Trace_locks;
