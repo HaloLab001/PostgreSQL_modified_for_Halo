@@ -105,6 +105,11 @@
 StaticAssertDecl(LW_VAL_EXCLUSIVE > (uint32) MAX_BACKENDS,
 				 "MAX_BACKENDS too big for lwlock.c");
 
+/* statement history hook */
+LWLock_statisc_hook_type lwlock_statisc_hook = NULL;
+LWLock_statisc_end_type lwlock_statisc_end_hook = NULL;
+LWLock_statisc_wait_type lwlock_statisc_wait_hook = NULL;
+
 /*
  * There are three sorts of LWLock "tranches":
  *
@@ -1226,6 +1231,10 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 	{
 		bool		mustwait;
 
+		/* for statement history */
+		if (lwlock_statisc_hook)
+			lwlock_statisc_hook();
+
 		/*
 		 * Try to grab the lock the first time, we're not in the waitqueue
 		 * yet/anymore.
@@ -1278,6 +1287,10 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 		lwstats->block_count++;
 #endif
 
+		/* for statement history */
+		if (lwlock_statisc_hook)
+			lwlock_statisc_wait_hook();
+
 		LWLockReportWaitStart(lock);
 		if (TRACE_POSTGRESQL_LWLOCK_WAIT_START_ENABLED())
 			TRACE_POSTGRESQL_LWLOCK_WAIT_START(T_NAME(lock), mode);
@@ -1324,6 +1337,10 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 	 */
 	while (extraWaits-- > 0)
 		PGSemaphoreUnlock(proc->sem);
+
+	/* for statement history */
+	if (lwlock_statisc_hook)
+		lwlock_statisc_end_hook();
 
 	return result;
 }
